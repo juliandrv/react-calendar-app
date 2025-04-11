@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark;
+}
+
+.rbc-events-container {
+  margin-right: 0 !important;
+}
