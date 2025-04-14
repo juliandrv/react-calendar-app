@@ -1,31 +1,26 @@
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
+import { useState } from 'react';
+
 import { Calendar } from 'react-big-calendar';
-import { addHours } from 'date-fns';
 
 import { Navbar } from '../components/Navbar';
 import { CalendarEvent } from '../components/CalendarEvent';
 import { CalendarModal } from '../components/CalendarModal';
+import { FabAddEvent } from '../components/FabAddEvent';
+import { FabDeleteEvent } from '../components/FabDeleteEvent';
 
 import { localizer } from '../../helpers/calendarLocalizer';
 import { getMessagesES } from '../../helpers/getMessages';
-import { useState } from 'react';
 
-const events = [
-  {
-    title: 'Aprender React',
-    notes: 'Estudiar diariamente',
-    start: new Date(),
-    end: addHours(new Date(), 2),
-    bgColor: '#fafafa',
-    user: {
-      _id: '123',
-      name: 'Julián',
-    },
-  },
-];
+import { useUiStore } from '../../hooks/useUiStore';
+import { useCalendarStore } from '../../hooks/useCalendarStore';
 
 export const CalendarPage = () => {
+  const { events, hasEventSelected, setActiveEvent } =
+    useCalendarStore();
+  const { isDateModalOpen, openDateModal } = useUiStore();
+
   const [lastView, setLastView] = useState(
     localStorage.getItem('lastView') || 'week'
   );
@@ -44,16 +39,21 @@ export const CalendarPage = () => {
   };
 
   const onSelected = (event) => {
-    console.log({ click: event });
+    setActiveEvent(event);
   };
 
-  const onDoubleClick = (event) => {
-    console.log({ doubleClick: event });
+  const onDoubleClick = () => {
+    openDateModal();
   };
 
   const onViewChanged = (event) => {
     localStorage.setItem('lastView', event);
     setLastView(event);
+  };
+
+  const onSelectSlot = () => {
+    if (!hasEventSelected) return;
+    setActiveEvent(null);
   };
 
   return (
@@ -68,6 +68,9 @@ export const CalendarPage = () => {
         defaultView={lastView}
         startAccessor='start'
         endAccessor='end'
+        formats={{
+          timeGutterFormat: 'hh:mm a',
+        }}
         style={{
           height: 'calc(100vh - 72px)',
           backgroundColor: 'white',
@@ -80,9 +83,15 @@ export const CalendarPage = () => {
         onSelectEvent={onSelected}
         onDoubleClickEvent={onDoubleClick}
         onView={onViewChanged}
+        selectable={true}
+        onSelectSlot={onSelectSlot}
       />
 
       <CalendarModal />
+
+      <FabAddEvent />
+
+      {hasEventSelected && !isDateModalOpen && <FabDeleteEvent />}
     </>
   );
 };

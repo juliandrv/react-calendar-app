@@ -1,22 +1,29 @@
 import 'react-datepicker/dist/react-datepicker.css';
 
-import { useState, useRef } from 'react';
-import { addHours, differenceInSeconds } from 'date-fns';
+import { useState, useRef, useMemo, useEffect } from 'react';
+import { differenceInSeconds } from 'date-fns';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale/es';
+import { useUiStore } from '../../hooks/useUiStore';
+import { useCalendarStore } from '../../hooks/useCalendarStore';
 
 registerLocale('es', es);
 
 export const CalendarModal = () => {
   const modalRef = useRef(null);
 
-  const [isOpen, setIsOpen] = useState(true);
+  const { activeEvent, setActiveEvent, startSavingEvent } =
+    useCalendarStore();
+
+  const { isDateModalOpen, closeDateModal } = useUiStore();
+
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   const [formValues, setFormValues] = useState({
-    title: 'Julián',
-    notes: 'Hola mundo',
+    title: '',
+    notes: '',
     start: new Date(),
-    end: null,
+    end: new Date(),
   });
 
   const onInputChanged = ({ target }) => {
@@ -27,7 +34,8 @@ export const CalendarModal = () => {
   };
 
   const onCloseModal = () => {
-    setIsOpen(false);
+    closeDateModal();
+    setActiveEvent(null);
   };
 
   const onDateChanged = (event, changing) => {
@@ -37,8 +45,9 @@ export const CalendarModal = () => {
     });
   };
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
+    setFormSubmitted(true);
 
     const difference = differenceInSeconds(
       formValues.end,
@@ -46,33 +55,53 @@ export const CalendarModal = () => {
     );
 
     if (isNaN(difference) || difference <= 0) {
-      console.log('Error en fechas');
       return;
     }
 
     if (formValues.title.length <= 0) return;
 
-    console.log(formValues);
-
     // TODO: remover errores en pantalla
 
+    await startSavingEvent(formValues);
     onCloseModal();
+    setFormSubmitted(false);
   };
+
+  const endDateClass = useMemo(() => {
+    if (!formSubmitted) return '';
+
+    return formValues.end && formValues.end > formValues.start
+      ? ''
+      : 'input-error';
+  }, [formValues.end, formSubmitted]);
+
+  const titleClass = useMemo(() => {
+    if (!formSubmitted) return '';
+
+    return formValues.title.length >= 3 ? '' : 'input-error';
+  }, [formValues.title, formSubmitted]);
+
+  useEffect(() => {
+    if (activeEvent !== null) {
+      setFormValues({ ...activeEvent });
+    }
+  }, [activeEvent]);
 
   return (
     <dialog
-      open={isOpen}
+      open={isDateModalOpen}
       ref={modalRef}
       id='my_modal_5'
       className='modal modal-bottom sm:modal-middle'
       onClose={onCloseModal}
     >
       <div className='modal-box'>
-        <h1 className='text-3xl'>Nuevo evento</h1>
+        <h1 className='text-3xl'>
+          {activeEvent ? formValues.title : 'Nuevo evento'}
+        </h1>
 
         <div className='modal-action'>
           <form method='dialog'>
-            {/* if there is a button in form, it will close the modal */}
             <button className='btn btn-lg btn-circle btn-ghost absolute right-4 top-4'>
               ✕
             </button>
@@ -104,7 +133,7 @@ export const CalendarModal = () => {
             <DatePicker
               minDate={formValues.start}
               selected={formValues.end}
-              className='input w-full'
+              className={`input w-full ${endDateClass}`}
               onChange={(event) => onDateChanged(event, 'end')}
               dateFormat='P, h:mm aaaa'
               timeFormat='h:mm aaaa'
@@ -112,19 +141,28 @@ export const CalendarModal = () => {
               locale='es'
               timeCaption='Hora'
             />
+            {endDateClass === 'input-error' && (
+              <p className='text-error'>
+                La fecha y hora de fin debe ser mayor a la de inicio
+              </p>
+            )}
           </fieldset>
 
           <fieldset className='fieldset mb-3'>
             <legend className='fieldset-legend'>Título</legend>
             <input
               type='text'
-              className='input w-full'
+              className={`input w-full ${titleClass}`}
               placeholder='Título del evento'
               name='title'
               value={formValues.title}
               onChange={onInputChanged}
             />
-            <p className='fieldset-label text-error'>Optional</p>
+            {titleClass === 'input-error' && (
+              <p className='text-error'>
+                Debe tener al menos 3 caracteres
+              </p>
+            )}
           </fieldset>
 
           <fieldset className='fieldset mb-3'>
