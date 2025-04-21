@@ -1,6 +1,6 @@
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Calendar } from 'react-big-calendar';
 
@@ -15,10 +15,18 @@ import { getMessagesES } from '../../helpers/getMessages';
 
 import { useUiStore } from '../../hooks/useUiStore';
 import { useCalendarStore } from '../../hooks/useCalendarStore';
+import { useAuthStore } from '../../hooks/useAuthStore';
 
 export const CalendarPage = () => {
-  const { events, hasEventSelected, setActiveEvent } =
-    useCalendarStore();
+  const { user } = useAuthStore();
+  const { activeEvent } = useCalendarStore();
+
+  const {
+    events,
+    hasEventSelected,
+    setActiveEvent,
+    startLoadingEvents,
+  } = useCalendarStore();
   const { isDateModalOpen, openDateModal } = useUiStore();
 
   const [lastView, setLastView] = useState(
@@ -26,8 +34,13 @@ export const CalendarPage = () => {
   );
 
   const eventStyleGetter = (event, start, end, isSelected) => {
+    const isMyEvent =
+      user.uid === event.user._id || user.uid === event.user.uid;
+
+    // if (!isMyEvent) return;
+
     const style = {
-      backgroundColor: '#347CF7',
+      backgroundColor: isMyEvent ? '#355cf7' : '#665660',
       borderRadius: '0px',
       opacity: 0.8,
       color: 'white',
@@ -55,6 +68,16 @@ export const CalendarPage = () => {
     if (!hasEventSelected) return;
     setActiveEvent(null);
   };
+
+  const isMyEvent = useMemo(() => {
+    if (!hasEventSelected) return false;
+
+    return user.uid === activeEvent.user._id;
+  }, [hasEventSelected, activeEvent]);
+
+  useEffect(() => {
+    startLoadingEvents();
+  }, []);
 
   return (
     <>
@@ -91,7 +114,9 @@ export const CalendarPage = () => {
 
       <FabAddEvent />
 
-      {hasEventSelected && !isDateModalOpen && <FabDeleteEvent />}
+      {hasEventSelected && !isDateModalOpen && isMyEvent && (
+        <FabDeleteEvent />
+      )}
     </>
   );
 };

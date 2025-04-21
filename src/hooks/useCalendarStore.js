@@ -4,7 +4,10 @@ import {
   onDeleteEvent,
   onSetActiveEvent,
   onUpdateEvent,
+  onLoadEvents,
 } from '../store/calendar/calendarSlice';
+import calendarAPI from '../api/calendarAPI';
+import { convertEventsToDateEvents } from '../helpers/convertEventsToDateEvents';
 
 export const useCalendarStore = () => {
   const dispatch = useDispatch();
@@ -12,28 +15,58 @@ export const useCalendarStore = () => {
   const { events, activeEvent } = useSelector(
     (state) => state.calendar
   );
+  const { user } = useSelector((state) => state.auth);
 
   const setActiveEvent = (event) => {
     dispatch(onSetActiveEvent(event));
   };
 
   const startSavingEvent = async (event) => {
-    //TODO: llegar al backend
+    try {
+      if (event.id) {
+        await calendarAPI.put(`/events/${event.id}`, event);
 
-    if (event._id) {
-      dispatch(onUpdateEvent({ ...event }));
-    } else {
+        dispatch(onUpdateEvent({ ...event, user }));
+
+        return;
+      }
+
       // Creando
+      const { data } = await calendarAPI.post('/events', event);
+
       dispatch(
-        onAddNewEvent({ ...event, _id: new Date().getTime() })
+        onAddNewEvent({
+          ...event,
+          id: data.event.id,
+          user: user,
+        })
       );
+    } catch (error) {
+      console.log(error);
+      console.log('Error al guardar el evento');
     }
   };
 
-  const startDeletingEvent = () => {
-    //TODO: llamar al backend
+  const startDeletingEvent = async () => {
+    try {
+      await calendarAPI.delete(`/events/${activeEvent.id}`);
+    } catch (error) {
+      console.log(error);
+      console.log('Error al eliminar el evento');
+    }
 
     dispatch(onDeleteEvent());
+  };
+
+  const startLoadingEvents = async () => {
+    try {
+      const { data } = await calendarAPI.get('/events');
+      const events = convertEventsToDateEvents(data.events);
+      dispatch(onLoadEvents(events));
+    } catch (error) {
+      console.log('Error cargando eventos');
+      console.log(error);
+    }
   };
 
   return {
@@ -44,5 +77,6 @@ export const useCalendarStore = () => {
     setActiveEvent,
     startSavingEvent,
     startDeletingEvent,
+    startLoadingEvents,
   };
 };

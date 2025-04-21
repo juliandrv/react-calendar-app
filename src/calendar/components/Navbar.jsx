@@ -1,4 +1,12 @@
+import { useAuthStore } from '../../hooks/useAuthStore';
+
 export const Navbar = () => {
+  const { startLogout, user } = useAuthStore();
+
+  const handleLogout = () => {
+    startLogout();
+  };
+
   return (
     <nav className='navbar bg-base-300 shadow-sm'>
       <div className='flex-1'>
@@ -20,26 +28,15 @@ export const Navbar = () => {
           CalendarApp
         </a>
       </div>
-      <div className='flex-none'>
+      <div className='flex items-center gap-4'>
+        <h2 className='text-xl'>{user.name}</h2>
+
         <ul className='menu menu-horizontal items-center gap-2 px-1'>
           <li>
-            <a>Link</a>
-          </li>
-          <li>
-            <details>
-              <summary>Parent</summary>
-              <ul className='bg-base-300 rounded-t-none p-2'>
-                <li>
-                  <a>Link 1</a>
-                </li>
-                <li>
-                  <a>Link 2</a>
-                </li>
-              </ul>
-            </details>
-          </li>
-          <li>
-            <button className='btn btn-outline btn-error '>
+            <button
+              onClick={handleLogout}
+              className='btn btn-outline btn-error '
+            >
               <svg
                 xmlns='http://www.w3.org/2000/svg'
                 fill='none'

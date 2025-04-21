@@ -10,7 +10,7 @@ export const FabDeleteEvent = () => {
   return (
     <button
       onClick={handleDeleteEvent}
-      className='btn btn-xl btn-circle bg-error border-0 absolute bottom-6 left-6'
+      className='btn btn-xl btn-circle bg-error border-0 absolute bottom-6 left-6 z-10'
     >
       <svg
         xmlns='http://www.w3.org/2000/svg'

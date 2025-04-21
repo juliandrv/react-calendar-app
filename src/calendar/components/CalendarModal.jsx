@@ -6,11 +6,14 @@ import DatePicker, { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale/es';
 import { useUiStore } from '../../hooks/useUiStore';
 import { useCalendarStore } from '../../hooks/useCalendarStore';
+import { useAuthStore } from '../../hooks/useAuthStore';
 
 registerLocale('es', es);
 
 export const CalendarModal = () => {
   const modalRef = useRef(null);
+
+  const { user } = useAuthStore();
 
   const { activeEvent, setActiveEvent, startSavingEvent } =
     useCalendarStore();
@@ -81,6 +84,11 @@ export const CalendarModal = () => {
     return formValues.title.length >= 3 ? '' : 'input-error';
   }, [formValues.title, formSubmitted]);
 
+  const canEdit = useMemo(() => {
+    if (!activeEvent) return true; // If it's a new event, allow edit
+    return activeEvent.user?._id === user.uid; // Compare event user id with current user id
+  }, [activeEvent, user]);
+
   useEffect(() => {
     if (activeEvent !== null) {
       setFormValues({ ...activeEvent });
@@ -123,6 +131,7 @@ export const CalendarModal = () => {
               showTimeSelect
               locale='es'
               timeCaption='Hora'
+              disabled={!canEdit}
             />
           </fieldset>
 
@@ -140,6 +149,7 @@ export const CalendarModal = () => {
               showTimeSelect
               locale='es'
               timeCaption='Hora'
+              disabled={!canEdit}
             />
             {endDateClass === 'input-error' && (
               <p className='text-error'>
@@ -157,6 +167,7 @@ export const CalendarModal = () => {
               name='title'
               value={formValues.title}
               onChange={onInputChanged}
+              disabled={!canEdit}
             />
             {titleClass === 'input-error' && (
               <p className='text-error'>
@@ -173,10 +184,31 @@ export const CalendarModal = () => {
               name='notes'
               value={formValues.notes}
               onChange={onInputChanged}
+              disabled={!canEdit}
             />
           </fieldset>
 
+          {!canEdit && (
+            <div role='alert' className='alert alert-error'>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='h-6 w-6 shrink-0 stroke-current'
+                fill='none'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'
+                />
+              </svg>
+              <span>No puedes editar un evento que no sea tuyo</span>
+            </div>
+          )}
+
           <button
+            disabled={!canEdit}
             type='submit'
             className='btn w-full rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white  hover:bg-indigo-500'
           >

@@ -24,7 +24,7 @@ export const FabAddEvent = () => {
   return (
     <button
       onClick={handleNewEvent}
-      className='btn btn-xl btn-circle bg-primary border-0 absolute bottom-6 right-6'
+      className='btn btn-xl btn-circle bg-primary border-0 absolute bottom-6 right-6 z-10'
     >
       <svg
         xmlns='http://www.w3.org/2000/svg'
