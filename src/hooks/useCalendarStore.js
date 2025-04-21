@@ -26,7 +26,15 @@ export const useCalendarStore = () => {
       if (event.id) {
         await calendarAPI.put(`/events/${event.id}`, event);
 
-        dispatch(onUpdateEvent({ ...event, user }));
+        dispatch(
+          onUpdateEvent({
+            ...event,
+            user: {
+              _id: user.uid,
+              name: user.name,
+            },
+          })
+        );
 
         return;
       }
@@ -38,7 +46,10 @@ export const useCalendarStore = () => {
         onAddNewEvent({
           ...event,
           id: data.event.id,
-          user: user,
+          user: {
+            _id: user.uid,
+            name: user.name,
+          },
         })
       );
     } catch (error) {

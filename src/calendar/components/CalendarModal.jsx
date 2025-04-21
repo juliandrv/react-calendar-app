@@ -63,8 +63,6 @@ export const CalendarModal = () => {
 
     if (formValues.title.length <= 0) return;
 
-    // TODO: remover errores en pantalla
-
     await startSavingEvent(formValues);
     onCloseModal();
     setFormSubmitted(false);
@@ -86,7 +84,10 @@ export const CalendarModal = () => {
 
   const canEdit = useMemo(() => {
     if (!activeEvent) return true; // If it's a new event, allow edit
-    return activeEvent.user?._id === user.uid; // Compare event user id with current user id
+    return (
+      activeEvent.user?._id === user.uid ||
+      activeEvent.title === 'Nuevo Evento'
+    ); // Compare event user id with current user id
   }, [activeEvent, user]);
 
   useEffect(() => {
